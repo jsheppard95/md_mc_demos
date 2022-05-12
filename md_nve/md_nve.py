@@ -19,7 +19,7 @@ Adapted from mathematica_nve_md_demo2.nb and Matlab_MC__MD_programs
 import numpy as np
 import matplotlib.pyplot as plt
 
-def MD_main(N_part, rho):
+def MD_main(N_part, rho, init_vel=3., timestep=0.005):
     """
     Main function to run NVE MD simulation.
     Parameters:
@@ -28,13 +28,25 @@ def MD_main(N_part, rho):
         Number of particles to simulate, must be multiple of 3
     rho : float
         reduced denisty (LJ units), i.e rho_star = (rho [N/m^3])(sigma^3)
+    init_vel : float
+        initial velocity, determines initial temperature, default = 3
+    timestep : float
+        timestep for integrating ODEs, default = 0.005
     """
     # Input parameter check
     if N_part % 3 != 0:
         raise ValueError("Number of particles must be a multiple of 3")
     
-    generate_lattice(N_part, rho)
+    coord = generate_lattice(N_part, rho)
 
+    # Set random initial velocities from uniform distribution and let the
+    # fluid equilibrate. Since the variance of the distribution of velocities
+    # is T* in dimensionless units, start with something "hot" to melt the
+    # lattice
+    randomvel = np.random.uniform(low=-init_vel, high=init_vel, size=(N_part, 3))
+
+    # calculate coordinates at previous timestep
+    oldcoord = coord - timestep * randomvel
 
 def generate_lattice(N_part, rho):
     """
@@ -49,7 +61,7 @@ def generate_lattice(N_part, rho):
     box12 = box1/2
     box13 = box1/l
 
-    coords = np.zeros((N_part, 3))  # row = particle, col = x, y, z coordinate
+    coord = np.zeros((N_part, 3))  # row = particle, col = x, y, z coordinate
 
     # place particles - See MatLab code for magic
     for i in range(1, N_part + 1):
@@ -59,16 +71,16 @@ def generate_lattice(N_part, rho):
         y = np.ceil(y1/l)
         z = (i % l) + 1
 
-        coords[i - 1, 0] = x
-        coords[i - 1, 1] = y
-        coords[i - 1, 2] = z
-    coords = coords - (l + 1)/2
-    coords = coords * box13
+        coord[i - 1, 0] = x
+        coord[i - 1, 1] = y
+        coord[i - 1, 2] = z
+    coord = coord - (l + 1)/2
+    coord = coord * box13
 
     # Plot initial particle positions in lattice
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
-    ax.scatter(coords[:, 0], coords[:, 1], coords[:, 2])
+    ax.scatter(coord[:, 0], coord[:, 1], coord[:, 2])
     ax.set_xlabel(r"$x$")
     ax.set_ylabel(r"$y$")
     ax.set_zlabel(r"$z$")
@@ -76,6 +88,7 @@ def generate_lattice(N_part, rho):
     ax.set_ylim(-box12, box12)
     ax.set_zlim(-box12, box12)
     plt.show()
+    return coord
 
 
 MD_main(27, 0.8)
