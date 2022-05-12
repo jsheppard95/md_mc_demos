@@ -19,7 +19,7 @@ Adapted from mathematica_nve_md_demo2.nb and Matlab_MC__MD_programs
 import numpy as np
 import matplotlib.pyplot as plt
 
-def MD_main(N_part, rho, init_vel=3., timestep=0.005):
+def MD_main(N_part, rho, init_vel=3., timestep=0.005, n_iter=200):
     """
     Main function to run NVE MD simulation.
     Parameters:
@@ -32,6 +32,8 @@ def MD_main(N_part, rho, init_vel=3., timestep=0.005):
         initial velocity, determines initial temperature, default = 3
     timestep : float
         timestep for integrating ODEs, default = 0.005
+    n_iter : int
+        Number of iterations of Verlet algorithm to perform, default = 200
     """
     # Input parameter check
     if N_part % 3 != 0:
@@ -48,6 +50,9 @@ def MD_main(N_part, rho, init_vel=3., timestep=0.005):
     # calculate coordinates at previous timestep
     oldcoord = coord - timestep * randomvel
 
+    # Run Verlet Algorithm
+
+
 def generate_lattice(N_part, rho):
     """
     Initializes particles on cubic lattice with a unit cell size determined
@@ -55,6 +60,11 @@ def generate_lattice(N_part, rho):
     Parameters:
     -----------
     See MD_main
+    Returns:
+    --------
+    coord : numpy.array
+        Particle coordinate matrix of shape (N_part, 3); rows -> particle#,
+        col-> x,y,z
     """
     l = N_part ** (1/3)  # number of particles per unit cell length
     box1 = l/rho**(1/3)
@@ -90,5 +100,22 @@ def generate_lattice(N_part, rho):
     plt.show()
     return coord
 
+
+def verlet(coord, oldcoord, timestep, n_iter):
+    """
+    Runs Verlet algorithm on particle coordinates
+    Parameters:
+    -----------
+    coord : numpy.array
+        Particle coordinate matrix at current timestep
+    oldcoord : numpy.array
+        Particle coordinate matrix at previous timestep
+    timestep : float
+        See MD_main
+    n_iter : int
+        See MD_main
+    """
+    dtsq = timestep**2
+    dt2 = timestep*2
 
 MD_main(27, 0.8)
