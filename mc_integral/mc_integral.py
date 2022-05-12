@@ -1,6 +1,9 @@
 """
 CH E 210B, HW3, Problem 5
 
+Author: Jackson Sheppard
+Last Edit: 5/11/22
+
 Python script to compute a volume integral of
 f(x, y, z) = (x^2 + y^2 + z^2)sin(xyz) over the
 volume x = [0, 4], y = [-1, 2], z = [0, 1] using a Monte Carlo Method.
