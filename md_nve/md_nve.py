@@ -2,7 +2,7 @@
 CH E 210B, HW3, Problem 6
 
 Author: Jackson Sheppard
-Last Edit: 5/11/22
+Last Edit: 5/12/22
 
 Python Script to perform an NVE MD simulation of a medel fluid with a LJ 6-8
 pair potential:
@@ -39,7 +39,7 @@ def MD_main(N_part, rho, init_vel=3., timestep=0.005, n_iter=200):
     if N_part % 3 != 0:
         raise ValueError("Number of particles must be a multiple of 3")
     
-    coord = generate_lattice(N_part, rho)
+    coord, box1 = generate_lattice(N_part, rho)
 
     # Set random initial velocities from uniform distribution and let the
     # fluid equilibrate. Since the variance of the distribution of velocities
@@ -51,6 +51,7 @@ def MD_main(N_part, rho, init_vel=3., timestep=0.005, n_iter=200):
     oldcoord = coord - timestep * randomvel
 
     # Run Verlet Algorithm
+    verlet(coord, oldcoord, timestep, n_iter, box1)
 
 
 def generate_lattice(N_part, rho):
@@ -62,9 +63,9 @@ def generate_lattice(N_part, rho):
     See MD_main
     Returns:
     --------
-    coord : numpy.array
-        Particle coordinate matrix of shape (N_part, 3); rows -> particle#,
-        col-> x,y,z
+    (coord, box1) : tuple (numpy.array, float)
+        Tuple including particle coordinate matrix of shape (N_part, 3);
+        rows -> particle#, col-> x,y,z and box unit cell size
     """
     l = N_part ** (1/3)  # number of particles per unit cell length
     box1 = l/rho**(1/3)
@@ -98,10 +99,10 @@ def generate_lattice(N_part, rho):
     ax.set_ylim(-box12, box12)
     ax.set_zlim(-box12, box12)
     plt.show()
-    return coord
+    return (coord, box1)
 
 
-def verlet(coord, oldcoord, timestep, n_iter):
+def verlet(coord, oldcoord, timestep, n_iter, box1):
     """
     Runs Verlet algorithm on particle coordinates
     Parameters:
@@ -114,8 +115,49 @@ def verlet(coord, oldcoord, timestep, n_iter):
         See MD_main
     n_iter : int
         See MD_main
+    box1 : float
+        Box unit cell size, returned by `generate_lattice`
     """
     dtsq = timestep**2
     dt2 = timestep*2
+
+    n_part = len(coord[:, 0])
+    print(box1)
+
+    # Initialize arrays for data collection
+    tstar = np.zeros(n_iter)
+    kstar = np.zeros(n_iter)
+    estar = np.zeros(n_iter)
+    kstar = np.zeros(n_iter)
+
+    # Outer loop to move particles `n_iter` times
+    for k in range(n_iter):
+        # Initialize force matrix, potential, virial coefficients, and K.E
+        force = np.zeros((n_part, 3))
+        pot = 0
+        vir = 0
+
+        sumvsq = 0
+
+        # Outer loop of force calculation
+        for i in range(n_part - 1):
+            rxi = coord[i, 0]
+            ryi = coord[i, 1]
+            rzi = coord[i, 2]
+
+            fxi = force[i, 0]
+            fyi = force[i, 1]
+            fzi = force[i, 2]
+
+            # Inner loop of force calculation
+            for j in range(1, n_part):
+                # Calculate displacements
+                rxij = rxi - coord[j, 0]
+                ryij = ryi - coord[j, 1]
+                rzij = rzi - coord[j, 2]
+
+                # Minimum image convention
+                rxij = rxij - round(rxij/box1) * box1
+
 
 MD_main(27, 0.8)
